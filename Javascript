@@ -1,0 +1,782 @@
+
+"use strict";
+
+// =====================================
+// 1. INITIAL CLUB DATA
+// =====================================
+
+const defaultClubs = [
+    {
+        id: 1,
+        name: "Coding Club",
+        category: "Technology",
+        icon: "💻",
+        description: "Learn programming, solve coding challenges and build software projects.",
+        coordinator: "Computer Science Department",
+        meeting: "Monday, 3:00 PM"
+    },
+    {
+        id: 2,
+        name: "AI & Robotics Club",
+        category: "Technology",
+        icon: "🤖",
+        description: "Explore artificial intelligence, machine learning and robotics.",
+        coordinator: "Technology Department",
+        meeting: "Tuesday, 3:00 PM"
+    },
+    {
+        id: 3,
+        name: "Photography Club",
+        category: "Arts",
+        icon: "📸",
+        description: "Improve photography skills and capture memorable campus moments.",
+        coordinator: "Arts Department",
+        meeting: "Wednesday, 2:00 PM"
+    },
+    {
+        id: 4,
+        name: "Music Club",
+        category: "Arts",
+        icon: "🎵",
+        description: "Discover musical talents through singing and instrumental performances.",
+        coordinator: "Cultural Department",
+        meeting: "Thursday, 2:30 PM"
+    },
+    {
+        id: 5,
+        name: "Sports Club",
+        category: "Sports",
+        icon: "🏆",
+        description: "Participate in sports activities, competitions and fitness events.",
+        coordinator: "Physical Education Department",
+        meeting: "Friday, 3:00 PM"
+    },
+    {
+        id: 6,
+        name: "Social Service Club",
+        category: "Social",
+        icon: "🤝",
+        description: "Support community service, volunteering and environmental awareness.",
+        coordinator: "Student Welfare Department",
+        meeting: "Saturday, 10:00 AM"
+    },
+    {
+        id: 7,
+        name: "Literary Club",
+        category: "Literature",
+        icon: "📚",
+        description: "Develop reading, creative writing, poetry and public speaking skills.",
+        coordinator: "Language Department",
+        meeting: "Monday, 2:00 PM"
+    },
+    {
+        id: 8,
+        name: "Entrepreneurship Club",
+        category: "Technology",
+        icon: "🚀",
+        description: "Explore business ideas, innovation, startups and teamwork.",
+        coordinator: "Business Development Cell",
+        meeting: "Wednesday, 3:00 PM"
+    },
+    {
+        id: 9,
+        name: "Dance Club",
+        category: "Arts",
+        icon: "💃",
+        description: "Showcase dance talents and participate in cultural programmes.",
+        coordinator: "Cultural Department",
+        meeting: "Friday, 2:00 PM"
+    }
+];
+
+// =====================================
+// 2. LOCAL STORAGE
+// =====================================
+
+function loadData(key, fallback) {
+    try {
+        const saved = localStorage.getItem(key);
+
+        if (saved === null) {
+            return fallback;
+        }
+
+        const parsed = JSON.parse(saved);
+
+        return Array.isArray(parsed) ? parsed : fallback;
+    } catch (error) {
+        console.error("Unable to load saved data:", error);
+        return fallback;
+    }
+}
+
+function saveData(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+    } catch (error) {
+        console.error("Unable to save data:", error);
+        alert("Unable to save data. Check your browser storage.");
+        return false;
+    }
+}
+
+const clubs = defaultClubs;
+
+let members = loadData("cc_members", []);
+let events = loadData("cc_events", []);
+let currentStudentId = localStorage.getItem("cc_current_student") || "";
+
+// =====================================
+// 3. HTML ELEMENTS
+// =====================================
+
+const clubContainer = document.getElementById("clubContainer");
+const searchInput = document.getElementById("searchInput");
+const categoryFilter = document.getElementById("categoryFilter");
+const noClubs = document.getElementById("noClubs");
+
+const registrationForm = document.getElementById("registrationForm");
+const studentName = document.getElementById("studentName");
+const studentId = document.getElementById("studentId");
+const studentEmail = document.getElementById("studentEmail");
+const joinClub = document.getElementById("joinClub");
+const registrationMessage = document.getElementById("registrationMessage");
+
+const eventForm = document.getElementById("eventForm");
+const eventTitle = document.getElementById("eventTitle");
+const eventClub = document.getElementById("eventClub");
+const eventDate = document.getElementById("eventDate");
+const eventDescription = document.getElementById("eventDescription");
+const eventMessage = document.getElementById("eventMessage");
+const eventContainer = document.getElementById("eventContainer");
+
+const memberClubFilter = document.getElementById("memberClubFilter");
+const membersContainer = document.getElementById("membersContainer");
+
+const infoModal = document.getElementById("infoModal");
+const modalBody = document.getElementById("modalBody");
+
+// =====================================
+// 4. HELPER FUNCTIONS
+// =====================================
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+        const replacements = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        };
+
+        return replacements[char];
+    });
+}
+
+function getClub(id) {
+    return clubs.find(club => club.id === Number(id));
+}
+
+function getCurrentMember() {
+    return members.find(member =>
+        member.studentId.toLowerCase() === currentStudentId.toLowerCase()
+    );
+}
+
+function isJoined(clubId) {
+    const member = getCurrentMember();
+
+    return Boolean(
+        member &&
+        Array.isArray(member.clubs) &&
+        member.clubs.includes(Number(clubId))
+    );
+}
+
+function getMemberCount(clubId) {
+    return members.filter(member =>
+        Array.isArray(member.clubs) &&
+        member.clubs.includes(Number(clubId))
+    ).length;
+}
+
+function showMessage(element, message, type) {
+    element.textContent = message;
+    element.className = "message " + type;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return "Date not specified";
+
+    const date = new Date(dateString + "T00:00:00");
+
+    if (Number.isNaN(date.getTime())) {
+        return "Date not specified";
+    }
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+}
+
+function populateClubSelects() {
+    const options = clubs.map(club =>
+        `<option value="${club.id}">${escapeHTML(club.name)}</option>`
+    ).join("");
+
+    joinClub.innerHTML =
+        '<option value="">Choose a club</option>' + options;
+
+    eventClub.innerHTML =
+        '<option value="">Select club</option>' + options;
+
+    memberClubFilter.innerHTML =
+        '<option value="">Choose a club to view members</option>' + options;
+}
+
+// =====================================
+// 5. DISPLAY CLUBS DYNAMICALLY
+// =====================================
+
+function displayClubs() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const selectedCategory = categoryFilter.value;
+
+    const filteredClubs = clubs.filter(club => {
+        const matchesSearch = (
+            club.name.toLowerCase().includes(searchTerm) ||
+            club.description.toLowerCase().includes(searchTerm) ||
+            club.category.toLowerCase().includes(searchTerm)
+        );
+
+        const matchesCategory =
+            selectedCategory === "All" ||
+            club.category === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+    });
+
+    noClubs.hidden = filteredClubs.length !== 0;
+
+    clubContainer.innerHTML = filteredClubs.map(club => {
+        const joined = isJoined(club.id);
+        const count = getMemberCount(club.id);
+
+        return `
+            <article class="club-card">
+                <div class="club-top">
+                    <div class="club-icon">${club.icon}</div>
+                    <span class="category">
+                        ${escapeHTML(club.category)}
+                    </span>
+                </div>
+
+                <h3>${escapeHTML(club.name)}</h3>
+
+                <p>${escapeHTML(club.description)}</p>
+
+                <div class="club-meta">
+                    👥 ${count} member(s)
+                    <br>
+                    🗓️ ${escapeHTML(club.meeting)}
+                </div>
+
+                <div class="club-actions">
+                    <button class="btn secondary small-btn"
+                        data-action="info" data-id="${club.id}">
+                        View Details
+                    </button>
+
+                    <button class="btn ${joined ? "danger" : "primary"} small-btn"
+                        data-action="${joined ? "leave" : "join"}"
+                        data-id="${club.id}">
+                        ${joined ? "Leave Club" : "Join Club"}
+                    </button>
+
+                    <button class="btn success small-btn"
+                        data-action="members" data-id="${club.id}">
+                        Members
+                    </button>
+                </div>
+            </article>
+        `;
+    }).join("");
+
+    updateStats();
+}
+
+// =====================================
+// 6. UPDATE DASHBOARD STATISTICS
+// =====================================
+
+function updateStats() {
+    const member = getCurrentMember();
+
+    document.getElementById("totalClubs").textContent = clubs.length;
+
+    document.getElementById("myClubs").textContent =
+        member && Array.isArray(member.clubs)
+            ? member.clubs.length
+            : 0;
+
+    document.getElementById("totalEvents").textContent = events.length;
+}
+
+// =====================================
+// 7. VIEW CLUB INFORMATION
+// =====================================
+
+function showClubInfo(clubId) {
+    const club = getClub(clubId);
+
+    if (!club) return;
+
+    modalBody.innerHTML = `
+        <div class="club-icon">${club.icon}</div>
+
+        <h2 id="modalTitle">${escapeHTML(club.name)}</h2>
+
+        <p><strong>Category:</strong>
+            ${escapeHTML(club.category)}</p>
+
+        <p><strong>Description:</strong>
+            ${escapeHTML(club.description)}</p>
+
+        <p><strong>Coordinator:</strong>
+            ${escapeHTML(club.coordinator)}</p>
+
+        <p><strong>Meeting:</strong>
+            ${escapeHTML(club.meeting)}</p>
+
+        <p><strong>Total Members:</strong>
+            ${getMemberCount(club.id)}</p>
+
+        <button class="btn primary"
+            data-action="${isJoined(club.id) ? "leave" : "join"}"
+            data-id="${club.id}">
+            ${isJoined(club.id) ? "Leave Club" : "Join Club"}
+        </button>
+    `;
+
+    infoModal.hidden = false;
+}
+
+function closeModal() {
+    infoModal.hidden = true;
+}
+
+document.getElementById("closeModal").addEventListener("click", closeModal);
+
+infoModal.addEventListener("click", function (event) {
+    if (event.target === infoModal) {
+        closeModal();
+    }
+});
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        closeModal();
+    }
+});
+
+// =====================================
+// 8. MEMBER REGISTRATION & VALIDATION
+// =====================================
+
+registrationForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const name = studentName.value.trim();
+    const id = studentId.value.trim();
+    const email = studentEmail.value.trim().toLowerCase();
+    const clubId = Number(joinClub.value);
+
+    if (name.length < 2) {
+        showMessage(
+            registrationMessage,
+            "Please enter a valid full name.",
+            "error"
+        );
+        return;
+    }
+
+    if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
+        showMessage(
+            registrationMessage,
+            "Enter a valid Student ID using letters, numbers, _ or -.",
+            "error"
+        );
+        return;
+    }
+
+    if (!studentEmail.validity.valid || !email) {
+        showMessage(
+            registrationMessage,
+            "Please enter a valid email address.",
+            "error"
+        );
+        return;
+    }
+
+    const club = getClub(clubId);
+
+    if (!club) {
+        showMessage(
+            registrationMessage,
+            "Please select a valid club.",
+            "error"
+        );
+        return;
+    }
+
+    const normalizedId = id.toLowerCase();
+
+    let existingMember = members.find(member =>
+        member.studentId.toLowerCase() === normalizedId
+    );
+
+    if (existingMember) {
+        if (existingMember.email.toLowerCase() !== email) {
+            showMessage(
+                registrationMessage,
+                "Student ID is already registered with another email.",
+                "error"
+            );
+            return;
+        }
+
+        if (existingMember.clubs.includes(clubId)) {
+            showMessage(
+                registrationMessage,
+                "You have already joined this club!",
+                "error"
+            );
+            return;
+        }
+
+        const oldClubs = [...existingMember.clubs];
+
+        existingMember.clubs.push(clubId);
+        existingMember.name = name;
+
+        if (!saveData("cc_members", members)) {
+            existingMember.clubs = oldClubs;
+            return;
+        }
+    } else {
+        const newMember = {
+            name: name,
+            studentId: id,
+            email: email,
+            clubs: [clubId]
+        };
+
+        members.push(newMember);
+
+        if (!saveData("cc_members", members)) {
+            members.pop();
+            return;
+        }
+    }
+
+    currentStudentId = id;
+    localStorage.setItem("cc_current_student", id);
+
+    showMessage(
+        registrationMessage,
+        "Registration successful! You joined " + club.name + ".",
+        "ok"
+    );
+
+    registrationForm.reset();
+
+    refreshAll();
+});
+
+// =====================================
+// 9. JOIN AND LEAVE CLUB
+// =====================================
+
+function joinClubAction(clubId) {
+    const club = getClub(clubId);
+
+    if (!club) return;
+
+    if (!getCurrentMember()) {
+        joinClub.value = String(clubId);
+
+        document.getElementById("registrationSection")
+            .scrollIntoView({ behavior: "smooth" });
+
+        showMessage(
+            registrationMessage,
+            "Enter your details below to join " + club.name + ".",
+            "ok"
+        );
+
+        closeModal();
+        return;
+    }
+
+    const member = getCurrentMember();
+
+    if (member.clubs.includes(clubId)) {
+        alert("You have already joined this club.");
+        return;
+    }
+
+    member.clubs.push(clubId);
+
+    if (!saveData("cc_members", members)) {
+        member.clubs.pop();
+        return;
+    }
+
+    alert("You have successfully joined " + club.name + "!");
+    closeModal();
+    refreshAll();
+}
+
+function leaveClubAction(clubId) {
+    const club = getClub(clubId);
+    const member = getCurrentMember();
+
+    if (!club || !member) {
+        alert("Please register before leaving a club.");
+        return;
+    }
+
+    if (!member.clubs.includes(clubId)) {
+        alert("You have not joined this club.");
+        return;
+    }
+
+    const confirmed = confirm(
+        "Are you sure you want to leave " + club.name + "?"
+    );
+
+    if (!confirmed) return;
+
+    const oldClubs = [...member.clubs];
+
+    member.clubs = member.clubs.filter(id => id !== clubId);
+
+    if (!saveData("cc_members", members)) {
+        member.clubs = oldClubs;
+        return;
+    }
+
+    alert("You have left " + club.name + ".");
+    closeModal();
+    refreshAll();
+}
+
+// =====================================
+// 10. DISPLAY CLUB MEMBERS
+// =====================================
+
+function displayMembers(clubId) {
+    const club = getClub(clubId);
+
+    if (!club) {
+        membersContainer.innerHTML = "";
+        return;
+    }
+
+    const clubMembers = members.filter(member =>
+        Array.isArray(member.clubs) &&
+        member.clubs.includes(Number(clubId))
+    );
+
+    if (clubMembers.length === 0) {
+        membersContainer.innerHTML = `
+            <p class="empty-message">
+                No members have registered for
+                ${escapeHTML(club.name)} yet.
+            </p>
+        `;
+        return;
+    }
+
+    membersContainer.innerHTML = `
+        <h3 style="margin-bottom: 12px;">
+            ${escapeHTML(club.name)} — ${clubMembers.length} Member(s)
+        </h3>
+
+        <div class="member-table-wrap">
+            <table class="member-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Student Name</th>
+                        <th>Student ID</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${clubMembers.map((member, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${escapeHTML(member.name)}</td>
+                            <td>${escapeHTML(member.studentId)}</td>
+                            <td>${escapeHTML(member.email)}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// =====================================
+// 11. ADD EVENT ANNOUNCEMENTS
+// =====================================
+
+eventForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const title = eventTitle.value.trim();
+    const clubId = Number(eventClub.value);
+    const date = eventDate.value;
+    const description = eventDescription.value.trim();
+
+    const club = getClub(clubId);
+
+    if (!title || !description || !club || !date) {
+        showMessage(
+            eventMessage,
+            "Please fill in all event details.",
+            "error"
+        );
+        return;
+    }
+
+    const selectedDate = new Date(date + "T00:00:00");
+
+    if (Number.isNaN(selectedDate.getTime())) {
+        showMessage(
+            eventMessage,
+            "Please enter a valid event date.",
+            "error"
+        );
+        return;
+    }
+
+    const newEvent = {
+        id: Date.now(),
+        title: title,
+        clubId: clubId,
+        date: date,
+        description: description
+    };
+
+    events.push(newEvent);
+
+    if (!saveData("cc_events", events)) {
+        events.pop();
+        return;
+    }
+
+    showMessage(
+        eventMessage,
+        "Event announcement added successfully!",
+        "ok"
+    );
+
+    eventForm.reset();
+    refreshAll();
+});
+
+// =====================================
+// 12. DISPLAY EVENT ANNOUNCEMENTS
+// =====================================
+
+function displayEvents() {
+    const sortedEvents = [...events].sort((a, b) =>
+        a.date.localeCompare(b.date)
+    );
+
+    if (sortedEvents.length === 0) {
+        eventContainer.innerHTML = `
+            <p class="empty-message">
+                No event announcements available yet.
+            </p>
+        `;
+        return;
+    }
+
+    eventContainer.innerHTML = sortedEvents.map(item => {
+        const club = getClub(item.clubId);
+
+        return `
+            <article class="event-card">
+                <span class="event-date">
+                    📅 ${escapeHTML(formatDate(item.date))}
+                </span>
+
+                <h3>${escapeHTML(item.title)}</h3>
+
+                <p>
+                    🏛️ ${escapeHTML(club ? club.name : "College Event")}
+                </p>
+
+                <p>${escapeHTML(item.description)}</p>
+            </article>
+        `;
+    }).join("");
+}
+
+// =====================================
+// 13. HANDLE CLUB CARD BUTTONS
+// =====================================
+
+document.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-action]");
+
+    if (!button) return;
+
+    const action = button.dataset.action;
+    const id = Number(button.dataset.id);
+
+ if (!getClub(id)) return;
+
+    if (action === "info") {
+        showClubInfo(id);
+    }
+
+    if (action === "join") {
+        joinClubAction(id);
+    }
+
+    if (action === "leave") {
+        leaveClubAction(id);
+    }
+
+    if (action === "members") {
+        memberClubFilter.value = String(id);
+        displayMembers(id);
+
+        document.getElementById("membersContainer")
+            .scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+});
+
+// =====================================
+// 14. SEARCH AND FILTER
+// =====================================
+
+searchInput.addEventListener("input", displayClubs);
+categoryFilter.addEventListener("change", displayClubs);
+
+memberClubFilter.addEventListener("change", function () {
+    if (memberClubFilter.value) {
+        displayMembers(Number(memberClubFilter.value));
+    } else {
+        membersContainer.innerHTML = "";
+    }
+});
