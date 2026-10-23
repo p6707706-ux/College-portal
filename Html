@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Club Management Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="brand">
+            <div class="logo">🎓</div>
+            <div>
+                <h1>CampusConnect</h1>
+                <p>College Club Management Portal</p>
+            </div>
+        </div>
+        <div class="header-label">Student Portal</div>
+    </header>
+
+    <main class="container">
+
+        <section class="welcome">
+            <div>
+                <p class="eyebrow">YOUR CAMPUS, YOUR COMMUNITY</p>
+                <h2>Discover Your Passion!</h2>
+                <p>Explore clubs, connect with students and participate in events.</p>
+            </div>
+            <div class="welcome-icon">🌟</div>
+        </section>
+
+        <section class="stats">
+            <div class="stat-card">
+                <span>🏛️</span>
+                <div>
+                    <p>Total Clubs</p>
+                    <h3 id="totalClubs">0</h3>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span>👥</span>
+                <div>
+                    <p>My Clubs</p>
+                    <h3 id="myClubs">0</h3>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span>📅</span>
+                <div>
+                    <p>Events</p>
+                    <h3 id="totalEvents">0</h3>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-heading">
+                <div>
+                    <h2>Explore Clubs</h2>
+                    <p>Find the club that matches your interests.</p>
+                </div>
+            </div>
+
+            <div class="filters">
+                <input type="search" id="searchInput"
+                    placeholder="🔍 Search clubs by name or keyword...">
+
+                <select id="categoryFilter">
+                    <option value="All">All Categories</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Arts">Arts</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Social">Social Service</option>
+                    <option value="Literature">Literature</option>
+                </select>
+            </div>
+
+            <div id="clubContainer" class="club-grid"></div>
+            <p id="noClubs" class="empty-message" hidden>
+                No clubs found. Try another search.
+            </p>
+        </section>
+
+        <section class="section panel" id="registrationSection">
+            <div class="section-heading">
+                <div>
+                    <h2>📝 Member Registration</h2>
+                    <p>Register your details to join a club.</p>
+                </div>
+            </div>
+
+            <form id="registrationForm" class="form-grid">
+                <div class="form-group">
+                    <label for="studentName">Full Name *</label>
+                    <input type="text" id="studentName"
+                        placeholder="Enter your full name" required
+                        minlength="2" maxlength="60">
+                </div>
+
+                <div class="form-group">
+                    <label for="studentId">Student ID *</label>
+                    <input type="text" id="studentId"
+                        placeholder="Enter your student ID" required
+                        maxlength="30">
+                </div>
+
+                <div class="form-group">
+                    <label for="studentEmail">College Email *</label>
+                    <input type="email" id="studentEmail"
+                        placeholder="student@example.com" required
+                        maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="joinClub">Select Club *</label>
+                    <select id="joinClub" required>
+                        <option value="">Choose a club</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn primary">
+                        Register & Join Club
+                    </button>
+                    <button type="reset" class="btn secondary">
+                        Clear Form
+                    </button>
+                </div>
+            </form>
+            <p id="registrationMessage" class="message" role="status"></p>
+        </section>
+
+        <section class="section panel">
+            <div class="section-heading">
+                <div>
+                    <h2>📢 Event Announcements</h2>
+                    <p>Stay updated with upcoming club activities.</p>
+                </div>
+            </div>
+
+            <form id="eventForm" class="form-grid">
+                <div class="form-group">
+                    <label for="eventTitle">Event Name *</label>
+                    <input type="text" id="eventTitle"
+                        placeholder="Enter event name" required
+                        maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="eventClub">Organizing Club *</label>
+                    <select id="eventClub" required>
+                        <option value="">Select club</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDate">Event Date *</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescription">Description *</label>
+                    <input type="text" id="eventDescription"
+                        placeholder="Describe the event" required
+                        maxlength="300">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn primary">
+                        + Add Announcement
+                    </button>
+                </div>
+            </form>
+
+            <p id="eventMessage" class="message" role="status"></p>
+            <div id="eventContainer" class="event-grid"></div>
+        </section>
+
+        <section class="section panel">
+            <div class="section-heading">
+                <div>
+                    <h2>👥 Club Members</h2>
+                    <p>View registered members of each club.</p>
+                </div>
+            </div>
+
+            <div class="form-group member-filter">
+                <label for="memberClubFilter">Select Club</label>
+                <select id="memberClubFilter">
+                    <option value="">Choose a club to view members</option>
+                </select>
+            </div>
+
+            <div id="membersContainer"></div>
+        </section>
+
+        <footer>
+            <p>© 2026 CampusConnect | College Club Management Portal</p>
+            <p>Learn • Connect • Grow 🚀</p>
+        </footer>
+
+    </main>
+
+    <div id="infoModal" class="modal" hidden>
+        <div class="modal-content" role="dialog"
+            aria-modal="true" aria-labelledby="modalTitle">
+            <button type="button" id="closeModal"
+                class="close-btn" aria-label="Close">×</button>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
